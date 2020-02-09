@@ -147,6 +147,11 @@ input {
   margin-right: 3%;
   box-sizing: border-box;
 }
+.select-compare {
+    width: 25%;
+    margin:auto;
+    box-sizing: border-box;
+  }
 
 .form-field__full {
   width: 100%;

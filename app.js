@@ -1,54 +1,94 @@
-// Create Dino Constructor
 
-// Create Dino Objects
 const grid = document.getElementById("grid");
 const header = document.getElementById("header");
 const form = document.getElementById("dino-compare");
+const SORT_WEIGHT = "weight";
+const SORT_HEIGHT = "height";
+const SORT_ALPHABETIC = "alphabetic";
+const SORT_DEFAULT = "default";
 
 let store = {
   showGrid: false,
-  dinos: []
+  creatures: [],
+  sorting: SORT_DEFAULT,
+  sorted: []
 };
 
-// Create Human Object
+const handleCompare = () => {
+    const select = document.getElementById("compare");
+    const selectValue = select.value;
+    const storeCp = {}
+    if(selectValue == SORT_HEIGHT){
+        sortByHeight()
+    }
+    else if(selectValue == SORT_WEIGHT){
+        sortByWeight()
+    }
+    else if(selectValue == SORT_ALPHABETIC){
+        sortByName()
+    }    
+    else if(selectValue == SORT_DEFAULT){
+        storeCp.sorted = [];
+    }
+    storeCp.sorting = selectValue;
+    updateStore(store, storeCp);
+}
 
-// Use IIFE to get human data from form
+const sortBy = (cb) => {
+    let sorted = [...store.creatures];
+    sorted = sorted.sort(cb)
+    updateStore(store, {sorted: sorted});
+}
 
-// Create Dino Compare Method 1
-// NOTE: Weight in JSON file is in lbs, height in inches.
+const sortByHeight = () => {
+    sortBy((c1, c2) => parseInt(c1.height) - parseInt(c2.height))
+}
 
-// Create Dino Compare Method 2
-// NOTE: Weight in JSON file is in lbs, height in inches.
+const sortByWeight = () => {
+    sortBy((c1, c2) => parseInt(c1.weight) - parseInt(c2.weight))
+}
 
-// Create Dino Compare Method 3
-// NOTE: Weight in JSON file is in lbs, height in inches.
+const sortByName = () => {
+    sortBy((a, b) => {
+        const nameA = a.species.toUpperCase();
+        const nameB = b.species.toUpperCase();
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        return 0;
+      })
+}
 
-// Generate Tiles for each Dino in Array
 const Card = data => {
   return `<div class="grid-item">
     <h3>${data.species}</h3>
     <img src="${data.img_src}">
-      <p class="card-text">${data.fact}</p>
+    ${data.fact ? `<p class="card-text">${data.fact}</p>` : ""}
   </div>`;
 };
 
-const Grid = ({ dinos ,  showGrid}) => {
-  return showGrid ? `${dinos.map(dino => Card(dino)).join("")}` : "";
+const Grid = ({ creatures ,  showGrid, sorted}) => {
+  return showGrid ? `${(sorted.length > 0 ? sorted : creatures).map(creature => Card(creature)).join("")}` : "";
 };
 
-const Header = ({ showGrid }) => {
+const Header = ({ showGrid, sorting }) => {
   return showGrid
-    ? `<h3 onclick="hideGrid()" class="backArrow"><i class="arrow left"></i> Back</h3>`
+    ? `<h3 onclick="hideGrid()" class="backArrow"><i class="arrow left"></i> Back</h3>
+    <select id="compare" class="select-compare" name="compare" onchange="handleCompare()">
+    <option value="${SORT_DEFAULT}" ${sorting == SORT_DEFAULT ? " selected ": ""}>Compare...</option>
+    <option value="${SORT_HEIGHT}" ${sorting == SORT_HEIGHT ? " selected ": ""}>Height</option>
+    <option value="${SORT_WEIGHT}" ${sorting == SORT_WEIGHT ? " selected ": ""}>Weight</option>
+    <option value="${SORT_ALPHABETIC}" ${sorting == SORT_ALPHABETIC ? " selected ": ""}">Alphabetic</option>
+</select>
+    `
     : `<h2>Natural History Museum</h2> 
 <h1>Dinosaurs</h1>
 <h3>How do you compare?</h3>`;
 };
 
-// Add tiles to DOM
-
-// Remove form from screen
-
-// On button click, prepare and display infographic
 function formSubmitHandler() {
   const form = document.getElementById("dino-compare");
   const human = {
@@ -63,21 +103,18 @@ function formSubmitHandler() {
   };
 
   const newState = { ...store };
-
-  let dinosCp = [...store.dinos];
-  if (dinosCp[4].ishuman) {
-    dinosCp[4] = human;
+  let creaturesCp = [...store.creatures];
+  if (creaturesCp[4].ishuman) {
+    creaturesCp[4] = human;
   } else {
-    dinosCp.splice(4, 0, human);
+    creaturesCp.splice(4, 0, human);
   }
-  newState.dinos = dinosCp;
+  newState.creatures = creaturesCp;
   newState.showGrid = true;
   updateStore(store, newState);
 }
 
 function hideGrid() {
-  console.log("hide grid");
-
   const newState = { ...store };
   newState.showGrid = false;
   updateStore(store, newState);
@@ -86,7 +123,6 @@ function hideGrid() {
 
 const updateStore = (store, newState) => {
   store = Object.assign(store, newState);
-  console.log("updated store: " + JSON.stringify(store));
   render(store);
 };
 
@@ -99,5 +135,5 @@ const render = async state => {
 // listening for load event
 window.addEventListener("load", async function run() {
   dinos = await this.fetch("/dino.json").then(res => res.json());
-  updateStore(store, { dinos: dinos.Dinos });
+  updateStore(store, { creatures: dinos.Dinos });
 });
